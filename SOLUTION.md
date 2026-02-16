@@ -31,11 +31,37 @@ This service consumes order/payment/dispute events from Kafka (Redpanda), correl
 4. Confirm risk-engine is alive:
    - `curl -i http://localhost:3001/health`
 
-## Assumptions (to be finalized)
-- When to compute a score (e.g., after order+payment exist; dispute updates later)
-- Duplicate events are expected; ingestion must be idempotent (event-level dedupe)
-- Out-of-order delivery is expected; partial state is stored and recomputed when missing parts arrive
-- Scores expire after TTL via `expires_at` and are treated as expired on read
+## Assumptions and External Dependencies
+
+## Assumptions
+1. **Bun as a Dependency Manager**:
+   - The project assumes that `bun` is installed locally for dependency management and runtime.
+   - Developers must install Bun by following the [Bun installation guide](https://bun.sh/docs/installation).
+
+2. **Zod for Validation**:
+   - The `zod` library is used for schema validation of Kafka topic payloads.
+   - It must be installed as a dependency using `bun add zod`.
+
+3. **Dockerized Environment**:
+   - The project is designed to run in a Dockerized environment.
+   - Ensure Docker is installed and running locally.
+
+4. **Database Configuration**:
+   - The PostgreSQL database must be accessible with the correct `DATABASE_URL` environment variable.
+   - The `.env` file must be configured appropriately.
+
+## External Dependencies
+1. **Bun**:
+   - Used for dependency management and runtime.
+
+2. **Zod**:
+   - Used for schema validation.
+
+3. **PostgreSQL**:
+   - Used as the database for storing and querying risk scores.
+
+4. **Docker**:
+   - Used to containerize the application and its dependencies.
 
 ## API (planned)
 - `GET /merchants/:merchantId/orders/:orderId/risk`
@@ -50,3 +76,5 @@ This service consumes order/payment/dispute events from Kafka (Redpanda), correl
 
 ## Notes
 - Implementation is built in vertical slices with small commits (chore/feat/fix).
+- Ensure all dependencies are installed and configured before running the project.
+- Refer to the `README.md` file for setup instructions.
