@@ -3,8 +3,9 @@ import { getPool, closePool } from "./db";
 import { errorResponse } from "./http";
 import { handleGetRiskScore } from "./handlers/getRiskScore";
 import { startKafkaConsumer } from "./kafka/consumer";
+import { config } from "./config/env";
 
-const PORT = Number(process.env.PORT ?? 3001);
+const PORT = config.port;
 
 const pool = getPool();
 

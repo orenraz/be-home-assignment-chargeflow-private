@@ -22,10 +22,10 @@ export function parseEvent(topic: TopicName, raw: string): ParseOk | ParseErr {
   let json: unknown;
   try {
     json = JSON.parse(raw);
-  } catch {
+  } catch (error) {
     return {
       ok: false,
-      error: { code: "INVALID_JSON", message: "Message is not valid JSON" },
+      error: { code: "INVALID_JSON", message: "Message is not valid JSON", details: error },
     };
   }
 
@@ -41,18 +41,24 @@ export function parseEvent(topic: TopicName, raw: string): ParseOk | ParseErr {
         message: `Unknown topic: ${topic}`,
       },
     };
-  } catch (err) {
-    const details =
-      err instanceof ZodError
-        ? err.issues.map((i) => ({ path: i.path.join("."), message: i.message }))
-        : undefined;
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return {
+        ok: false,
+        error: {
+          code: "INVALID_EVENT",
+          message: "Event validation failed",
+          details: error.errors,
+        },
+      };
+    }
 
     return {
       ok: false,
       error: {
         code: "INVALID_EVENT",
-        message: "Message failed validation",
-        details,
+        message: "Unexpected error during validation",
+        details: error,
       },
     };
   }
