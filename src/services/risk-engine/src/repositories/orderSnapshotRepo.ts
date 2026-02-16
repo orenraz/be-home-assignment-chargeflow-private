@@ -9,10 +9,6 @@ export type UpsertSnapshotInput = {
   data: unknown; // topic-specific data payload (event.data)
 };
 
-function isValidDate(d: Date | null): d is Date {
-  return !!d && !Number.isNaN(d.getTime());
-}
-
 function handleUpsertQuery(topic: TopicName, occurredAt: Date | null, data: unknown) {
   return `
     INSERT INTO order_snapshot (
@@ -40,7 +36,7 @@ export async function upsertOrderSnapshot(
   pool: Pool,
   input: UpsertSnapshotInput
 ): Promise<void> {
-  const occurredAt = isValidDate(input.occurredAt) ? input.occurredAt : null;
+  const occurredAt = input.occurredAt;
 
   if (input.topic === TOPICS.orders) {
     await pool.query(

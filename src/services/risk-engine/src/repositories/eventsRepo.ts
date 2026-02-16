@@ -11,14 +11,6 @@ export type InsertEventInput = {
   payload: unknown; // full parsed JSON
 };
 
-// Add validation for InsertEventInput
-function validateInsertEventInput(input: InsertEventInput): boolean {
-  if (!input.eventId || !input.topic || !input.payload) {
-    throw new Error("Invalid event input: Missing required fields");
-  }
-  return true;
-}
-
 export async function insertEventIdempotent(
   pool: Pool,
   input: InsertEventInput
