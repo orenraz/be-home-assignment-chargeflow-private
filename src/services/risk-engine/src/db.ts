@@ -9,3 +9,8 @@ const pool = new Pool({
 });
 
 export const getPool = () => pool;
+
+export async function closePool(): Promise<void> {
+  // Implement logic to close the database connection pool
+  console.log("Closing database connection pool...");
+}

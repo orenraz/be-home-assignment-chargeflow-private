@@ -2,6 +2,7 @@ import { serve } from "bun";
 import { getPool, closePool } from "./db";
 import { errorResponse } from "./http";
 import { handleGetRiskScore } from "./handlers/getRiskScore";
+import { startKafkaConsumer } from "./kafka/consumer";
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -9,7 +10,7 @@ const pool = getPool();
 
 const server = serve({
   port: PORT,
-  async fetch(req) {
+  async fetch(req: Request) {
     const url = new URL(req.url);
 
     if (url.pathname === "/health") {
@@ -40,6 +41,25 @@ const server = serve({
       path: url.pathname,
     });
   },
+});
+
+async function main() {
+  const kafkaConsumer = await startKafkaConsumer(pool);
+
+  process.on("SIGINT", async () => {
+    await kafkaConsumer.stop();
+    process.exit(0);
+  });
+
+  process.on("SIGTERM", async () => {
+    await kafkaConsumer.stop();
+    process.exit(0);
+  });
+}
+
+main().catch((err) => {
+  console.error("Error starting application:", err);
+  process.exit(1);
 });
 
 function shutdown(signal: string) {
