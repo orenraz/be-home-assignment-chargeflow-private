@@ -4,6 +4,8 @@ import { insertEventIdempotent } from "../repositories/eventsRepo";
 import { parseEvent } from "../validation/parseEvent";
 import { TOPICS, type TopicName } from "../validation/eventSchemas";
 import { extractMerchantOrder } from "./extractKeys";
+import { upsertOrderSnapshot, getOrderSnapshot } from "../repositories/orderSnapshotRepo";
+import { isReadyToScore } from "../risk/isReadyToScore";
 
 function parseBrokers(): string[] {
   const raw = process.env.KAFKA_BROKERS ?? "redpanda:9092";
@@ -101,17 +103,38 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
         return;
       }
 
-      // eslint-disable-next-line no-console
+      if (!merchantId || !orderId) {
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            msg: "missing merchant/order keys; skipping snapshot update",
+            topic,
+            eventId,
+          })
+        );
+        return;
+      }
+
+      await upsertOrderSnapshot(pool, {
+        merchantId: merchantId ?? "UNKNOWN",
+        orderId: orderId ?? "UNKNOWN",
+        topic: topic as TopicName,
+        occurredAt: occurredAt && !Number.isNaN(occurredAt.getTime()) ? occurredAt : null,
+        data: (parsed.event as any).data,
+      });
+
+      const snapshot = await getOrderSnapshot(pool, merchantId, orderId);
+      const ready = isReadyToScore(snapshot);
+
       console.log(
         JSON.stringify({
           level: "info",
-          msg: "event stored",
+          msg: "snapshot updated",
           topic,
-          partition,
-          offset: message.offset,
           eventId,
           merchantId,
           orderId,
+          readyToScore: ready,
         })
       );
     },
