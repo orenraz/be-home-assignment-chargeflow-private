@@ -7,6 +7,13 @@ jest.mock("../../src/repositories/riskScoresReadRepo", () => ({
   getRiskScore: jest.fn(),
 }));
 
+jest.mock("pg", () => {
+  const mockPool = {
+    query: jest.fn().mockResolvedValue({ rows: [] }),
+  };
+  return { Pool: jest.fn(() => mockPool) };
+});
+
 describe("Risk Score Handler", () => {
   let pool: Pool;
 

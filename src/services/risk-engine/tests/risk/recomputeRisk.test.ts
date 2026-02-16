@@ -1,7 +1,8 @@
-import { recomputeRisk } from "../../src/risk/recomputeRisk";
+import { recomputeRiskIfReady as recomputeRisk } from "../../src/risk/recomputeRisk";
 import { Pool } from "pg";
 import { upsertRiskScore } from "../../src/repositories/riskScoresWriteRepo";
 import { calculateRisk } from "../../src/risk/calculateRisk";
+import { Kafka } from "kafkajs";
 
 jest.mock("../../src/repositories/riskScoresWriteRepo", () => ({
   upsertRiskScore: jest.fn(),
@@ -19,6 +20,18 @@ jest.mock("../../src/risk/calculateRisk", () => ({
     },
   })),
 }));
+
+jest.mock("kafkajs", () => {
+  return {
+    Kafka: jest.fn(() => ({
+      consumer: jest.fn(() => ({
+        connect: jest.fn(),
+        subscribe: jest.fn(),
+        run: jest.fn(),
+      })),
+    })),
+  };
+});
 
 describe("Recompute Risk", () => {
   let pool: Pool;
@@ -42,7 +55,9 @@ describe("Recompute Risk", () => {
       },
     } as any;
 
-    await recomputeRisk(pool, snapshot);
+    const merchantId = snapshot.merchantId;
+    const orderId = snapshot.orderId;
+    await recomputeRisk(pool, merchantId, orderId);
 
     expect(calculateRisk).toHaveBeenCalledWith(pool, snapshot);
     expect(upsertRiskScore).toHaveBeenCalledWith(pool, "merchant-1", {

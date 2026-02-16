@@ -1,14 +1,12 @@
-import { serve } from "bun";
 import { getPool, closePool } from "./db";
 import { errorResponse } from "./http";
 import { handleGetRiskScore } from "./handlers/getRiskScore";
 import { startKafkaConsumer } from "./kafka/consumer";
 import { config } from "./config/env";
 import { createServer } from "http";
-import { Kafka } from "kafkajs";
-import { Pool } from "pg";
 import express, { Request, Response, NextFunction } from "express";
 import pino from "pino";
+import { Kafka } from "kafkajs";
 
 const PORT = config.port;
 
@@ -16,48 +14,8 @@ let shuttingDown = false;
 
 const pool = getPool();
 
-const server = serve({
-  port: PORT,
-  async fetch(req: Request) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/health") {
-      return new Response("ok", { status: 200 });
-    }
-
-    // GET /merchants/:merchantId/orders/:orderId/risk
-    const match = url.pathname.match(
-      /^\/merchants\/([^/]+)\/orders\/([^/]+)\/risk$/
-    );
-    if (req.method === "GET" && match) {
-      const merchantId = decodeURIComponent(match[1]);
-      const orderId = decodeURIComponent(match[2]);
-      try {
-        return await handleGetRiskScore(pool, merchantId, orderId);
-      } catch (err) {
-        console.error(err);
-        return errorResponse(
-          500,
-          "INTERNAL_ERROR",
-          "Unexpected server error"
-        );
-      }
-    }
-
-    return errorResponse(404, "NOT_FOUND", "Route not found", {
-      method: req.method,
-      path: url.pathname,
-    });
-  },
-});
-
-const kafka = new Kafka({
-  clientId: "risk-engine",
-  brokers: process.env.KAFKA_BROKERS?.split(",") || [],
-});
-const consumer = kafka.consumer({
-  groupId: process.env.KAFKA_CONSUMER_GROUP || "risk-engine-group",
-});
+const app = express();
+const server = createServer(app);
 
 // Middleware for error handling
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -75,6 +33,38 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(statusCode).json(errorResponse);
 });
 
+// Example route
+app.get("/health", (req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
+
+// GET /merchants/:merchantId/orders/:orderId/risk
+app.get(
+  "/merchants/:merchantId/orders/:orderId/risk",
+  async (req: Request, res: Response) => {
+    const merchantId = decodeURIComponent(req.params.merchantId as string);
+    const orderId = decodeURIComponent(req.params.orderId as string);
+    try {
+      return await handleGetRiskScore(pool, merchantId, orderId);
+    } catch (err) {
+      console.error(err);
+      return errorResponse(
+        500,
+        "INTERNAL_ERROR",
+        "Unexpected server error"
+      );
+    }
+  }
+);
+
+const kafka = new Kafka({
+  clientId: "risk-engine",
+  brokers: process.env.KAFKA_BROKERS?.split(",") || [],
+});
+const consumer = kafka.consumer({
+  groupId: process.env.KAFKA_CONSUMER_GROUP || "risk-engine-group",
+});
+
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -83,7 +73,13 @@ async function shutdown() {
   try {
     console.log("Stopping HTTP server...");
     await new Promise((resolve, reject) => {
-      server.close((err) => (err ? reject(err) : resolve(null)));
+      server.close((err?: Error) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(null);
+        }
+      });
     });
     console.log("HTTP server stopped.");
   } catch (err) {
@@ -141,5 +137,7 @@ logger.info("Kafka consumer stopped.");
 logger.info("Closing database pool...");
 logger.info("Database pool closed.");
 logger.info("Shutdown complete.");
+
+export { app };
 
 

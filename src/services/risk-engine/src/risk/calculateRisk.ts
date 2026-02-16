@@ -54,11 +54,11 @@ export async function calculateRisk(
     merchantHasRecentChargebacks(pool, merchantId, 90),
   ]);
 
-  const s1 = clamp0to20(ipVelocityScore(recentIps, ip));
-  const s2 = clamp0to20(deviceReuseScore(knownDevices, deviceFingerprint));
+  const s1 = clamp0to20(ipVelocityScore(recentIps as string[], ip));
+  const s2 = clamp0to20(deviceReuseScore(knownDevices as string[], deviceFingerprint));
   const s3 = clamp0to20(emailDomainReputationScore(email));
   const s4 = clamp0to20(binCountryMismatchScore(billingCountry, binCountry));
-  const s5 = clamp0to20(chargebackHistoryScore(hasChargebacks));
+  const s5 = clamp0to20(chargebackHistoryScore(merchantId, hasChargebacks ? "1" : "0"));
 
   const signals: SignalsBreakdown = {
     ipVelocityScore: s1,
