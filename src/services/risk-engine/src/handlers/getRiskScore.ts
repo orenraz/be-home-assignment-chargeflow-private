@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
-import { errorResponse, jsonResponse } from "../http";
-import { findRiskScore } from "../repositories/riskScoresRepo";
+import { errorResponse, jsonResponse } from "../http.js";
+import { findRiskScore } from "../repositories/riskScoresRepo.js";
 import pino from "pino";
 
 const logger = pino();

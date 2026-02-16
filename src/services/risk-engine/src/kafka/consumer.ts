@@ -1,12 +1,12 @@
 import { Kafka, logLevel } from "kafkajs";
 import type { Pool } from "pg";
-import { insertEventIdempotent } from "../repositories/eventsRepo";
-import { parseEvent } from "../validation/parseEvent";
-import { TOPICS, type TopicName } from "../validation/eventSchemas";
-import { extractMerchantOrder } from "./extractKeys";
-import { upsertOrderSnapshot, getOrderSnapshot } from "../repositories/orderSnapshotRepo";
-import { isReadyToScore } from "../risk/isReadyToScore";
-import { recomputeRiskIfReady } from "../risk/recomputeRisk";
+import { insertEventIdempotent } from "../repositories/eventsRepo.js";
+import { parseEvent } from "../validation/parseEvent.js";
+import { TOPICS, type TopicName } from "../validation/eventSchemas.js";
+import { extractMerchantOrder } from "./extractKeys.js";
+import { upsertOrderSnapshot, getOrderSnapshot } from "../repositories/orderSnapshotRepo.js";
+import { isReadyToScore } from "../risk/isReadyToScore.js";
+import { recomputeRiskIfReady } from "../risk/recomputeRisk.js";
 import pino from "pino";
 const logger = pino();
 

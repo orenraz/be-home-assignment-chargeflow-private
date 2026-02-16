@@ -1,8 +1,8 @@
-import { getPool, closePool } from "./db";
-import { errorResponse } from "./http";
-import { handleGetRiskScore } from "./handlers/getRiskScore";
-import { startKafkaConsumer } from "./kafka/consumer";
-import { config } from "./config/env";
+import { getPool, closePool } from "./db.js";
+import { errorResponse } from "./http.js";
+import { handleGetRiskScore } from "./handlers/getRiskScore.js";
+import { startKafkaConsumer } from "./kafka/consumer.js";
+import { config } from "./config/env.js";
 import { createServer } from "http";
 import express, { Request, Response, NextFunction } from "express";
 import pino from "pino";
@@ -137,6 +137,8 @@ logger.info("Kafka consumer stopped.");
 logger.info("Closing database pool...");
 logger.info("Database pool closed.");
 logger.info("Shutdown complete.");
+
+await startKafkaConsumer();
 
 export { app };
 

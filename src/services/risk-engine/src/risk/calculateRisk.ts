@@ -54,8 +54,8 @@ export async function calculateRisk(
     merchantHasRecentChargebacks(pool, merchantId, 90),
   ]);
 
-  const s1 = clamp0to20(ipVelocityScore(recentIps, ip)); // Pass array directly
-  const s2 = clamp0to20(deviceReuseScore(knownDevices, deviceFingerprint)); // Pass array directly
+  const s1 = clamp0to20(ipVelocityScore(recentIps.join(","), ip)); // Pass array directly
+  const s2 = clamp0to20(deviceReuseScore(knownDevices.join(","), deviceFingerprint)); // Pass array directly
   const s3 = clamp0to20(emailDomainReputationScore(email));
   const s4 = clamp0to20(binCountryMismatchScore(billingCountry, binCountry));
   const s5 = clamp0to20(chargebackHistoryScore(merchantId, hasChargebacks ? "1" : "0"));
