@@ -6,6 +6,7 @@ import { TOPICS, type TopicName } from "../validation/eventSchemas";
 import { extractMerchantOrder } from "./extractKeys";
 import { upsertOrderSnapshot, getOrderSnapshot } from "../repositories/orderSnapshotRepo";
 import { isReadyToScore } from "../risk/isReadyToScore";
+import { recomputeRiskIfReady } from "../risk/recomputeRisk";
 import pino from "pino";
 const logger = pino();
 
@@ -133,6 +134,8 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
       const snapshot = await getOrderSnapshot(pool, merchantId, orderId);
       const ready = isReadyToScore(snapshot);
 
+      const rr = await recomputeRiskIfReady(pool, merchantId, orderId);
+
       logger.info(
         JSON.stringify({
           level: "info",
@@ -142,6 +145,18 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
           merchantId,
           orderId,
           readyToScore: ready,
+        })
+      );
+
+      console.log(
+        JSON.stringify({
+          level: "info",
+          msg: rr.recomputed ? "risk score recomputed" : "snapshot updated (not ready)",
+          topic,
+          eventId,
+          merchantId,
+          orderId,
+          score: rr.score ?? null,
         })
       );
     },
