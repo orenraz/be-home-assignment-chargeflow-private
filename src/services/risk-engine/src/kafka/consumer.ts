@@ -6,6 +6,8 @@ import { TOPICS, type TopicName } from "../validation/eventSchemas";
 import { extractMerchantOrder } from "./extractKeys";
 import { upsertOrderSnapshot, getOrderSnapshot } from "../repositories/orderSnapshotRepo";
 import { isReadyToScore } from "../risk/isReadyToScore";
+import pino from "pino";
+const logger = pino();
 
 function parseBrokers(): string[] {
   const raw = process.env.KAFKA_BROKERS ?? "redpanda:9092";
@@ -38,7 +40,12 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
 
   const consumer = kafka.consumer({ groupId: consumerGroupId() });
 
-  await consumer.connect();
+  try {
+    await consumer.connect();
+  } catch (error) {
+    logger.error({ level: "error", msg: "Failed to connect Kafka consumer", error });
+    throw error;
+  }
 
   const topics = topicList();
   for (const t of topics) {
@@ -54,7 +61,7 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
       const parsed = parseEvent(topic as TopicName, value);
       if (!parsed.ok) {
         // eslint-disable-next-line no-console
-        console.warn(
+        logger.warn(
           JSON.stringify({
             level: "warn",
             msg: "kafka message failed validation",
@@ -90,7 +97,7 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
       if (!result.inserted) {
         // duplicate event_id
         // eslint-disable-next-line no-console
-        console.log(
+        logger.info(
           JSON.stringify({
             level: "info",
             msg: "duplicate event skipped",
@@ -104,7 +111,7 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
       }
 
       if (!merchantId || !orderId) {
-        console.warn(
+        logger.warn(
           JSON.stringify({
             level: "warn",
             msg: "missing merchant/order keys; skipping snapshot update",
@@ -126,7 +133,7 @@ export async function startKafkaConsumer(pool: Pool): Promise<{
       const snapshot = await getOrderSnapshot(pool, merchantId, orderId);
       const ready = isReadyToScore(snapshot);
 
-      console.log(
+      logger.info(
         JSON.stringify({
           level: "info",
           msg: "snapshot updated",

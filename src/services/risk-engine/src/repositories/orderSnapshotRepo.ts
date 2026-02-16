@@ -13,6 +13,29 @@ function isValidDate(d: Date | null): d is Date {
   return !!d && !Number.isNaN(d.getTime());
 }
 
+function handleUpsertQuery(topic: TopicName, occurredAt: Date | null, data: unknown) {
+  return `
+    INSERT INTO order_snapshot (
+      merchant_id, order_id,
+      ${topic}_data, ${topic}_occurred_at,
+      updated_at
+    ) VALUES ($1, $2, $3::jsonb, $4, now())
+    ON CONFLICT (merchant_id, order_id) DO UPDATE
+    SET
+      ${topic}_data = CASE
+        WHEN order_snapshot.${topic}_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.${topic}_occurred_at
+        THEN EXCLUDED.${topic}_data
+        ELSE order_snapshot.${topic}_data
+      END,
+      ${topic}_occurred_at = CASE
+        WHEN order_snapshot.${topic}_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.${topic}_occurred_at
+        THEN EXCLUDED.${topic}_occurred_at
+        ELSE order_snapshot.${topic}_occurred_at
+      END,
+      updated_at = now()
+  `;
+}
+
 export async function upsertOrderSnapshot(
   pool: Pool,
   input: UpsertSnapshotInput
@@ -21,81 +44,21 @@ export async function upsertOrderSnapshot(
 
   if (input.topic === TOPICS.orders) {
     await pool.query(
-      `
-      INSERT INTO order_snapshot (
-        merchant_id, order_id,
-        order_data, order_occurred_at,
-        updated_at
-      ) VALUES ($1, $2, $3::jsonb, $4, now())
-      ON CONFLICT (merchant_id, order_id) DO UPDATE
-      SET
-        order_data = CASE
-          WHEN order_snapshot.order_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.order_occurred_at
-          THEN EXCLUDED.order_data
-          ELSE order_snapshot.order_data
-        END,
-        order_occurred_at = CASE
-          WHEN order_snapshot.order_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.order_occurred_at
-          THEN EXCLUDED.order_occurred_at
-          ELSE order_snapshot.order_occurred_at
-        END,
-        updated_at = now()
-      `,
-      [input.merchantId, input.orderId, JSON.stringify(input.data), occurredAt]
+      handleUpsertQuery(TOPICS.orders, occurredAt, input.data)
     );
     return;
   }
 
   if (input.topic === TOPICS.payments) {
     await pool.query(
-      `
-      INSERT INTO order_snapshot (
-        merchant_id, order_id,
-        payment_data, payment_occurred_at,
-        updated_at
-      ) VALUES ($1, $2, $3::jsonb, $4, now())
-      ON CONFLICT (merchant_id, order_id) DO UPDATE
-      SET
-        payment_data = CASE
-          WHEN order_snapshot.payment_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.payment_occurred_at
-          THEN EXCLUDED.payment_data
-          ELSE order_snapshot.payment_data
-        END,
-        payment_occurred_at = CASE
-          WHEN order_snapshot.payment_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.payment_occurred_at
-          THEN EXCLUDED.payment_occurred_at
-          ELSE order_snapshot.payment_occurred_at
-        END,
-        updated_at = now()
-      `,
-      [input.merchantId, input.orderId, JSON.stringify(input.data), occurredAt]
+      handleUpsertQuery(TOPICS.payments, occurredAt, input.data)
     );
     return;
   }
 
   if (input.topic === TOPICS.disputes) {
     await pool.query(
-      `
-      INSERT INTO order_snapshot (
-        merchant_id, order_id,
-        dispute_data, dispute_occurred_at,
-        updated_at
-      ) VALUES ($1, $2, $3::jsonb, $4, now())
-      ON CONFLICT (merchant_id, order_id) DO UPDATE
-      SET
-        dispute_data = CASE
-          WHEN order_snapshot.dispute_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.dispute_occurred_at
-          THEN EXCLUDED.dispute_data
-          ELSE order_snapshot.dispute_data
-        END,
-        dispute_occurred_at = CASE
-          WHEN order_snapshot.dispute_occurred_at IS NULL OR $4 IS NULL OR $4 >= order_snapshot.dispute_occurred_at
-          THEN EXCLUDED.dispute_occurred_at
-          ELSE order_snapshot.dispute_occurred_at
-        END,
-        updated_at = now()
-      `,
-      [input.merchantId, input.orderId, JSON.stringify(input.data), occurredAt]
+      handleUpsertQuery(TOPICS.disputes, occurredAt, input.data)
     );
     return;
   }
