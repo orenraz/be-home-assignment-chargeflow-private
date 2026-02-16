@@ -1,11 +1,20 @@
-FROM oven/bun:latest
+# Use the official Bun image
+FROM oven/bun:1.3.9
 
-WORKDIR /app/services/risk-engine
+# Set the working directory
+WORKDIR /app
 
-COPY packages/risk-signals /app/packages/risk-signals
-COPY src/services/risk-engine/package.json ./package.json
-RUN bun install
+# Copy package files first to leverage Docker caching
+COPY package.json bun.lockb ./
 
-COPY src/services/risk-engine/src ./src
+# Install dependencies explicitly
+RUN bun install --production && ls node_modules/dotenv
 
+# Copy the rest of the application
+COPY . .
+
+# Expose the application port
+EXPOSE 3001
+
+# Start the application
 CMD ["bun", "run", "dev"]
