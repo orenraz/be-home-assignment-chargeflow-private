@@ -1,80 +1,47 @@
-# Chargeflow Risk Engine — Solution
+# SOLUTION.md
 
-## Overview
-This service consumes order/payment/dispute events from Kafka (Redpanda), correlates them by merchant + order, computes a 0–100 risk score using `@chargeflow/risk-signals`, stores state in PostgreSQL, and exposes a REST API to query the latest score.
+## Architecture Overview
 
-## How to run
-1. Create env file:
-   - `cp env.example .env`
+### Diagram
+```
++-------------------+     +-------------------+     +-------------------+
+|   HTTP Server     | --> |   Kafka Consumer   | --> |   PostgreSQL DB    |
++-------------------+     +-------------------+     +-------------------+
+```
 
-2. Start the stack:
-   - `docker compose up --build`
-
-## Useful URLs
-- Redpanda Console (Kafka UI): http://localhost:8080
-- risk-engine service: http://localhost:3001
-- healthcheck: http://localhost:3001/health
-
-## How to verify the stack is working (baseline)
-1. Confirm containers are up:
-   - `docker compose ps`
-
-2. Confirm generator is producing:
-   - `docker compose logs -f event-generator`
-
-3. Confirm Kafka topics exist:
-   - In Redpanda Console → Topics:
-     - `orders.v1`
-     - `payments.v1`
-     - `disputes.v1`
-
-4. Confirm risk-engine is alive:
-   - `curl -i http://localhost:3001/health`
-
-## Assumptions and External Dependencies
+### Components
+- **HTTP Server**: Handles API requests for risk scores.
+- **Kafka Consumer**: Processes events and updates snapshots.
+- **PostgreSQL DB**: Stores snapshots and risk scores.
 
 ## Assumptions
-1. **Bun as a Dependency Manager**:
-   - The project assumes that `bun` is installed locally for dependency management and runtime.
-   - Developers must install Bun by following the [Bun installation guide](https://bun.sh/docs/installation).
+- Risk scores expire after `RISK_SCORE_TTL_SECONDS`.
+- Kafka events are deduplicated by `event_id`.
+- Scoring happens synchronously during event processing.
 
-2. **Zod for Validation**:
-   - The `zod` library is used for schema validation of Kafka topic payloads.
-   - It must be installed as a dependency using `bun add zod`.
+## Schema Summary
+- **snapshots**: Stores merchant snapshots.
+- **risk_scores**: Stores computed risk scores.
 
-3. **Dockerized Environment**:
-   - The project is designed to run in a Dockerized environment.
-   - Ensure Docker is installed and running locally.
+## API Specification
+- **GET /risk-score/:merchantId**
+  - **200**: Returns risk score.
+  - **404**: Risk score not found.
+  - **500**: Internal error.
 
-4. **Database Configuration**:
-   - The PostgreSQL database must be accessible with the correct `DATABASE_URL` environment variable.
-   - The `.env` file must be configured appropriately.
+## Tradeoffs
+- **Zod**: Chosen for schema validation due to simplicity.
+- **node-pg-migrate**: Used for database migrations.
+- **Deduplication**: Ensures idempotency for event processing.
 
-## External Dependencies
-1. **Bun**:
-   - Used for dependency management and runtime.
+## How to Run
+1. Set up `.env` file based on `.env.example`.
+2. Run `docker compose up --build`.
 
-2. **Zod**:
-   - Used for schema validation.
+## How to Verify
+1. Run `bun test` to ensure all tests pass.
+2. Use `curl` or Postman to test API endpoints.
 
-3. **PostgreSQL**:
-   - Used as the database for storing and querying risk scores.
-
-4. **Docker**:
-   - Used to containerize the application and its dependencies.
-
-## API (planned)
-- `GET /merchants/:merchantId/orders/:orderId/risk`
-  - 200: found and not expired
-  - 404: missing / never computed
-  - 410: expired
-
-## Data model (planned)
-- `events` (raw ingested events, dedupe by `event_id`)
-- `order_snapshot` (latest order/payment/dispute state by merchant+order)
-- `risk_scores` (score + breakdown + computed_at + expires_at)
-
-## Notes
-- Implementation is built in vertical slices with small commits (chore/feat/fix).
-- Ensure all dependencies are installed and configured before running the project.
-- Refer to the `README.md` file for setup instructions.
+## Optional Cleanup Job
+- Deletes expired risk scores every 10 minutes.
+- Controlled by `ENABLE_CLEANUP` environment variable.
