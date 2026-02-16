@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import { upsertOrderSnapshot, getOrderSnapshot } from "./orderSnapshotRepo";
-import { TOPICS } from "../validation/eventSchemas";
+import { upsertOrderSnapshot, getOrderSnapshot } from "./orderSnapshotRepo.js";
+import { TOPICS } from "../validation/eventSchemas.js";
 
 jest.mock("pg", () => {
   const mockPool = {

@@ -1,20 +1,24 @@
-# Use the official Bun image
-FROM oven/bun:1.3.9
+# Use Node.js as the base image
+FROM node:18-alpine
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package files first to leverage Docker caching
-COPY package.json bun.lockb ./
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Install dependencies explicitly
-RUN bun install --production && ls node_modules/dotenv
+# Install dependencies
+RUN npm install --production
 
-# Copy the rest of the application
-COPY . .
+# Install TypeScript globally
+RUN npm install -g typescript
 
-# Expose the application port
-EXPOSE 3001
+# Copy the rest of the application, excluding node_modules and unnecessary files
+COPY src ./src
+COPY tsconfig.json ./
+
+# Compile TypeScript to JavaScript
+RUN tsc
 
 # Start the application
-CMD ["bun", "run", "dev"]
+CMD ["node", "dist/index.js"]

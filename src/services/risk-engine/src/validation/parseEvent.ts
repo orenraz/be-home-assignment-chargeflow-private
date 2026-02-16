@@ -42,23 +42,13 @@ export function parseEvent(topic: TopicName, raw: string): ParseOk | ParseErr {
       },
     };
   } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        ok: false,
-        error: {
-          code: "INVALID_EVENT",
-          message: "Event validation failed",
-          details: error.errors,
-        },
-      };
-    }
-
+    const details = error instanceof ZodError ? error.issues : undefined; // Adjusted to access 'issues' instead of 'errors'
     return {
       ok: false,
       error: {
         code: "INVALID_EVENT",
-        message: "Unexpected error during validation",
-        details: error,
+        message: "Event validation failed",
+        details: details,
       },
     };
   }

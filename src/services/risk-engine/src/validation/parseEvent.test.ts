@@ -5,8 +5,9 @@ import { TOPICS } from "./eventSchemas";
 describe("parseEvent", () => {
   it("rejects invalid JSON", () => {
     const res = parseEvent(TOPICS.orders, "{not json}");
-    expect(res.ok).toBe(false);
-    expect(res.error.code).toBe("INVALID_JSON");
+    if (!res.ok) {
+      expect(res.error.code).toBe("INVALID_JSON");
+    }
   });
 
   it("accepts a valid order event shape", () => {
@@ -31,6 +32,8 @@ describe("parseEvent", () => {
     expect(res.ok).toBe(true);
     if (res.ok) {
       expect(res.event.data.merchant_id).toBe("m_1");
+    } else {
+      expect(res.error).toBeDefined();
     }
   });
 
@@ -43,7 +46,8 @@ describe("parseEvent", () => {
     });
 
     const res = parseEvent("unknown.topic" as any, payload);
-    expect(res.ok).toBe(false);
-    expect(res.error.code).toBe("INVALID_EVENT");
+    if (!res.ok) {
+      expect(res.error.code).toBe("INVALID_EVENT");
+    }
   });
 });

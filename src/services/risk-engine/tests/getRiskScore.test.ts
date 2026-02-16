@@ -2,8 +2,9 @@ import { handleGetRiskScore } from "../src/handlers/getRiskScore";
 import { Pool } from "pg";
 
 jest.mock("pg", () => {
+  const mockQuery = jest.fn();
   const mockPool = {
-    query: jest.fn(),
+    query: mockQuery,
   };
   return { Pool: jest.fn(() => mockPool) };
 });

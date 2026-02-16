@@ -1,4 +1,4 @@
-import { calculateRisk } from "./calculateRisk";
+import { calculateRisk } from "../../src/risk/calculateRisk.js";
 import { Pool } from "pg";
 import { ipVelocityScore, deviceReuseScore, emailDomainReputationScore, binCountryMismatchScore, chargebackHistoryScore } from "@chargeflow/risk-signals";
 

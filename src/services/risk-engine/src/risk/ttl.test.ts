@@ -1,4 +1,4 @@
-import { computeExpiresAt, getTtlSeconds } from "./ttl";
+import { computeExpiresAt, getTtlSeconds } from "./ttl.js";
 
 describe("TTL Helper", () => {
   beforeEach(() => {

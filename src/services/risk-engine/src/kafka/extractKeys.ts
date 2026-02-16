@@ -1,5 +1,5 @@
-import type { AnyEvent } from "../validation/eventSchemas";
-import { TOPICS, type TopicName } from "../validation/eventSchemas";
+import type { AnyEvent } from "../validation/eventSchemas.js";
+import { TOPICS, type TopicName } from "../validation/eventSchemas.js";
 
 export function extractMerchantOrder(
   topic: TopicName,

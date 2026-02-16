@@ -1,9 +1,9 @@
 import type { Pool } from "pg";
-import { getOrderSnapshot } from "../repositories/orderSnapshotRepo";
-import { isReadyToScore } from "./isReadyToScore";
-import { calculateRisk } from "./calculateRisk";
-import { computeExpiresAt } from "./ttl";
-import { upsertRiskScore } from "../repositories/riskScoresWriteRepo";
+import { getOrderSnapshot } from "../repositories/orderSnapshotRepo.js";
+import { isReadyToScore } from "./isReadyToScore.js";
+import { calculateRisk } from "./calculateRisk.js";
+import { computeExpiresAt } from "./ttl.js";
+import { upsertRiskScore } from "../repositories/riskScoresWriteRepo.js";
 
 export async function recomputeRiskIfReady(
   pool: Pool,
@@ -29,3 +29,5 @@ export async function recomputeRiskIfReady(
 
   return { recomputed: true, score: result.score };
 }
+
+export { recomputeRiskIfReady as recomputeRisk };

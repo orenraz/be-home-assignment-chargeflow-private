@@ -1,4 +1,4 @@
-import { calculateExpiresAt } from "../../src/risk/ttl";
+import { calculateExpiresAt } from "../../src/risk/ttl.js";
 
 describe("TTL Helper Functions", () => {
   it("should calculate expiresAt correctly", () => {

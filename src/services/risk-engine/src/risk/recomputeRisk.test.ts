@@ -1,13 +1,13 @@
-import { recomputeRisk } from "./recomputeRisk";
+import { recomputeRisk } from "./recomputeRisk.js";
 import { Pool } from "pg";
-import { upsertRiskScore } from "../repositories/riskScoresWriteRepo";
-import { calculateRisk } from "./calculateRisk";
+import { upsertRiskScore } from "../repositories/riskScoresWriteRepo.js";
+import { calculateRisk } from "./calculateRisk.js";
 
-jest.mock("../repositories/riskScoresWriteRepo", () => ({
+jest.mock("../repositories/riskScoresWriteRepo.js", () => ({
   upsertRiskScore: jest.fn(),
 }));
 
-jest.mock("./calculateRisk", () => ({
+jest.mock("./calculateRisk.js", () => ({
   calculateRisk: jest.fn(() => ({
     score: 50,
     signals: {
@@ -42,7 +42,7 @@ describe("Recompute Risk", () => {
       },
     } as any;
 
-    await recomputeRisk(pool, snapshot);
+    await recomputeRisk(pool, "merchant-1", snapshot);
 
     expect(calculateRisk).toHaveBeenCalledWith(pool, snapshot);
     expect(upsertRiskScore).toHaveBeenCalledWith(pool, "merchant-1", {

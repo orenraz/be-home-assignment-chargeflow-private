@@ -1,6 +1,6 @@
 import { Kafka } from "kafkajs";
 import { v4 as uuidv4 } from "uuid";
-import { buildDisputeEvt, buildOrderEvt, buildPaymentEvt } from "./events";
+import { buildDisputeEvt, buildOrderEvt, buildPaymentEvt } from "./events.js";
 
 const brokers = (process.env.KAFKA_BROKERS ?? "localhost:9092").split(",");
 const TOPIC_ORDERS = process.env.TOPIC_ORDERS ?? "orders.v1";

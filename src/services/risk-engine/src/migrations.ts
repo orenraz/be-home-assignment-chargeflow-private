@@ -1,13 +1,13 @@
-import { migrate } from "node-pg-migrate";
 import "dotenv/config";
+import { run as migrate } from "node-pg-migrate";
 
 export async function runMigrations() {
   try {
     await migrate({
       databaseUrl: process.env.DATABASE_URL,
+      migrationsTable: "pgmigrations",
       dir: "migrations",
       direction: "up",
-      migrationsTable: "pgmigrations",
       count: Infinity,
     });
     console.log("Migrations applied successfully.");

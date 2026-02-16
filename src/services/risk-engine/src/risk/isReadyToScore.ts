@@ -1,4 +1,4 @@
-import type { OrderSnapshotRow } from "../repositories/orderSnapshotRepo";
+import type { OrderSnapshotRow } from "../repositories/orderSnapshotRepo.js";
 
 export function isReadyToScore(snapshot: OrderSnapshotRow | null): boolean {
   if (!snapshot) return false;

@@ -5,6 +5,9 @@ import pino from "pino";
 
 const logger = pino();
 
+// Update the Json type to include undefined
+export type Json = { [key: string]: Json } | string | number | boolean | null | undefined;
+
 export async function handleGetRiskScore(
   pool: Pool,
   merchantId: string,
@@ -56,9 +59,9 @@ export async function handleGetRiskScore(
       merchantId: row.merchant_id,
       orderId: row.order_id,
       score: row.score,
-      signals: row.signals ?? {},
-      computedAt: row.computed_at.toISOString(),
-      expiresAt: row.expires_at.toISOString(),
+      signals: row.signals && Object.keys(row.signals).length > 0 ? (row.signals as Json) : undefined, // Ensure compatibility with Json type
+      computedAt: row.computed_at.toISOString(), // Convert Date to string
+      expiresAt: row.expires_at.toISOString(), // Convert Date to string
     });
   } catch (error) {
     logger.error({

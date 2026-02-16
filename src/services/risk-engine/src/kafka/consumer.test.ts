@@ -1,9 +1,9 @@
 import { Kafka, logLevel } from "kafkajs";
 import { Pool } from "pg";
-import { startKafkaConsumer } from "./consumer";
-import { insertEventIdempotent } from "../repositories/eventsRepo";
-import { parseEvent } from "../validation/parseEvent";
-import { extractMerchantOrder } from "./extractKeys";
+import { startKafkaConsumer } from "./consumer.js";
+import { insertEventIdempotent } from "../repositories/eventsRepo.js";
+import { parseEvent } from "../validation/parseEvent.js";
+import { extractMerchantOrder } from "./extractKeys.js";
 
 jest.mock("kafkajs", () => ({
   Kafka: jest.fn().mockImplementation(() => ({
@@ -17,15 +17,15 @@ jest.mock("kafkajs", () => ({
   logLevel: { NOTHING: "NOTHING" },
 }));
 
-jest.mock("../repositories/eventsRepo", () => ({
+jest.mock("../repositories/eventsRepo.js", () => ({
   insertEventIdempotent: jest.fn(),
 }));
 
-jest.mock("../validation/parseEvent", () => ({
+jest.mock("../validation/parseEvent.js", () => ({
   parseEvent: jest.fn(),
 }));
 
-jest.mock("./extractKeys", () => ({
+jest.mock("./extractKeys.js", () => ({
   extractMerchantOrder: jest.fn(),
 }));
 
